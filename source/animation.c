@@ -1,10 +1,8 @@
 #include "../include/animation.h"
 #include "../include/physics.h"
 
-void change_animation(Character *p, const Animation *newAnim)
-{
-	if (p->currentAnim == newAnim)
-	{
+void change_animation(Character *p, const Animation *newAnim) {
+	if (p->currentAnim == newAnim) {
 		return;
 	}
 
@@ -13,23 +11,17 @@ void change_animation(Character *p, const Animation *newAnim)
 	p->animFrame = 0;
 }
 
-void update_animation(Character *p)
-{
+void update_animation(Character *p) {
 	p->animTimer++;
 
-	if (p->animTimer > p->currentAnim->speed)
-	{
+	if (p->animTimer > p->currentAnim->speed) {
 		p->animTimer = 0;
 		p->animFrame++;
 
-		if (p->animFrame >= p->currentAnim->length)
-		{
-			if (p->currentAnim->loop)
-			{
+		if (p->animFrame >= p->currentAnim->length) {
+			if (p->currentAnim->loop) {
 				p->animFrame = 0;
-			}
-			else
-			{
+			} else {
 				p->animFrame = p->currentAnim->length - 1;
 			}
 		}

@@ -12,7 +12,7 @@ typedef struct {
 
 #define OAM_MEM ((volatile OBJ_ARR *)0x07000000)
 
-typedef struct{
+typedef struct {
 	int startFrame;
 	int length;
 	int speed;

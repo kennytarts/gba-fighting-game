@@ -2,6 +2,6 @@
 #define ANIMATION_H
 
 #include "physics.h"
-void change_animation(Character*p, const Animation* newAnim);
-void update_animation(Character* p);
+void change_animation(Character *p, const Animation *newAnim);
+void update_animation(Character *p);
 #endif

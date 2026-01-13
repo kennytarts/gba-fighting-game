@@ -9,17 +9,9 @@
 #define INT_TO_FIXED(i) ((i) << FIXED_SHIFT)
 #define FIXED_TO_INT(f) ((f) >> FIXED_SHIFT)
 
-typedef enum {
-	IDLE,
-	RUN,
-	JUMP,
-	ATTACK,
-	HURT,
-	BLOCK
-} State;
+typedef enum { IDLE, RUN, JUMP, ATTACK, HURT, BLOCK } State;
 
-typedef struct
-{
+typedef struct {
 	int x, y;
 	int dx, dy;
 	int width, height;
@@ -29,7 +21,7 @@ typedef struct
 	u8 facingRight;
 	int health;
 
-	const Animation* currentAnim;
+	const Animation *currentAnim;
 	int animTimer;
 	int animFrame;
 } Character;

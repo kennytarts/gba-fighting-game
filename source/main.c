@@ -9,8 +9,7 @@
 
 OBJ_ATTR shadowOAM[128];
 
-void init_sprite_memory()
-{
+void init_sprite_memory() {
 	REG_DMA[3].src = fighterPal;
 	REG_DMA[3].dst = MEM_PALETTE_OBJ;
 	REG_DMA[3].cnt = (fighterPalLen / 2) | DMA3_COPY16;
@@ -26,8 +25,7 @@ void init_sprite_memory()
 	MEM_OAM[0] = shadowOAM[0];
 }
 
-void init_background()
-{
+void init_background() {
 	REG_DMA[3].src = stagePal;
 	REG_DMA[3].dst = MEM_PALETTE_BG;
 	REG_DMA[3].cnt = (stagePalLen / 2) | DMA3_COPY16;
@@ -41,15 +39,13 @@ void init_background()
 	REG_DMA[3].cnt = (stageMapLen / 2) | DMA3_COPY16;
 }
 
-void update_visuals(Character *p, int oam_index)
-{
+void update_visuals(Character *p, int oam_index) {
 	int tileIndex = 0 + (p->currentAnim->startFrame + p->animFrame) * 16;
 
 	shadowOAM[oam_index].attr2 = tileIndex;
 
 	u16 attr1 = (FIXED_TO_INT(p->x) & 0x1FF) | (2 << 14);
-	if (!p->facingRight)
-	{
+	if (!p->facingRight) {
 		attr1 |= 0x1000;
 	}
 	shadowOAM[oam_index].attr0 =
@@ -65,8 +61,7 @@ const int MOVE_SPEED = FLOAT_TO_FIXED(2.0);
 const int FLOOR_Y = INT_TO_FIXED(100);
 const int FRICTION = FLOAT_TO_FIXED(0.1);
 
-int check_collision(Character *player, Character *enemy)
-{
+int check_collision(Character *player, Character *enemy) {
 	int player_x = FIXED_TO_INT(player->x);
 	int player_y = FIXED_TO_INT(player->y);
 
@@ -85,8 +80,7 @@ int check_collision(Character *player, Character *enemy)
 	return 1;
 }
 
-int main()
-{
+int main() {
 	init_background();
 	init_sprite_memory();
 	REG_DISPCNT = MODE0 | BG0_ENABLE | OBJ_ENABLE | OBJ_1D_MAP;
@@ -119,8 +113,7 @@ int main()
 	e.isGrounded = 0;
 	e.state = BLOCK;
 
-	while (1)
-	{
+	while (1) {
 		// BIOs Call 5: VBLlankIntrWait (Puts CPU into low-power sleep until
 		// VBlank interrupt fires.
 		__asm("swi 0x05");
@@ -131,52 +124,43 @@ int main()
 		// Player state
 		p.dx = 0;
 		e.dx = 0;
-		switch (p.state)
-		{
+		switch (p.state) {
 		case IDLE:
 			change_animation(&p, &ANIM_IDLE);
-			if (!(REG_KEYINPUT & KEY_RIGHT) | !(REG_KEYINPUT & KEY_LEFT))
-			{
+			if (!(REG_KEYINPUT & KEY_RIGHT) | !(REG_KEYINPUT & KEY_LEFT)) {
 				p.state = RUN;
 			}
 
-			if (!(REG_KEYINPUT & KEY_A) && p.isGrounded)
-			{
+			if (!(REG_KEYINPUT & KEY_A) && p.isGrounded) {
 				p.state = JUMP;
 				p.dy = JUMP_FORCE;
 				p.isGrounded = 0;
 			}
-			if (!(REG_KEYINPUT & KEY_B))
-			{
+			if (!(REG_KEYINPUT & KEY_B)) {
 				p.state = ATTACK;
 				p.stateTimer = 12;
 			}
-			if (!(REG_KEYINPUT & KEY_R) | !(REG_KEYINPUT & KEY_L))
-			{
+			if (!(REG_KEYINPUT & KEY_R) | !(REG_KEYINPUT & KEY_L)) {
 				p.state = BLOCK;
 			}
 			break;
 		case RUN:
 			change_animation(&p, &ANIM_RUN);
-			if (!(REG_KEYINPUT & KEY_RIGHT))
-			{
+			if (!(REG_KEYINPUT & KEY_RIGHT)) {
 				p.facingRight = 1;
 				p.dx = MOVE_SPEED;
 			}
 
-			if (!(REG_KEYINPUT & KEY_LEFT))
-			{
+			if (!(REG_KEYINPUT & KEY_LEFT)) {
 				p.facingRight = 0;
 				p.dx = -MOVE_SPEED;
 			}
 
-			if ((REG_KEYINPUT & KEY_RIGHT) && (REG_KEYINPUT & KEY_LEFT))
-			{
+			if ((REG_KEYINPUT & KEY_RIGHT) && (REG_KEYINPUT & KEY_LEFT)) {
 				p.state = IDLE;
 			}
 
-			if (!(REG_KEYINPUT & KEY_A) && p.isGrounded)
-			{
+			if (!(REG_KEYINPUT & KEY_A) && p.isGrounded) {
 				p.state = JUMP;
 				p.dy = JUMP_FORCE;
 				p.isGrounded = 0;
@@ -184,14 +168,12 @@ int main()
 			break;
 		case JUMP:
 			change_animation(&p, &ANIM_JUMP);
-			if (!(REG_KEYINPUT & KEY_RIGHT))
-			{
+			if (!(REG_KEYINPUT & KEY_RIGHT)) {
 				p.facingRight = 1;
 				p.dx = MOVE_SPEED;
 			}
 
-			if (!(REG_KEYINPUT & KEY_LEFT))
-			{
+			if (!(REG_KEYINPUT & KEY_LEFT)) {
 				p.facingRight = 0;
 				p.dx = -MOVE_SPEED;
 			}
@@ -199,44 +181,31 @@ int main()
 		case ATTACK:
 			change_animation(&p, &ANIM_ATTACK);
 			p.stateTimer--;
-			if (p.stateTimer <= 0)
-			{
+			if (p.stateTimer <= 0) {
 				p.state = IDLE;
 			}
 			// Start up
-			else if (p.stateTimer > 12)
-			{
+			else if (p.stateTimer > 12) {
 				// player_color = RGB15(31, 31, 31);
 			}
 			// Active
-			else if (p.stateTimer <= 10 && p.stateTimer > 5)
-			{
+			else if (p.stateTimer <= 10 && p.stateTimer > 5) {
 				// player_color = RGB15(31, 31, 0);
-				if (check_collision(&p, &e))
-				{
+				if (check_collision(&p, &e)) {
 					// enemy_color = RGB15(31, 0, 0);
-					if (e.state == BLOCK)
-					{
+					if (e.state == BLOCK) {
 
 						if ((FIXED_TO_INT(p.x) + p.width) / 2 <
-							(FIXED_TO_INT(e.x) + e.width) / 2)
-						{
+							(FIXED_TO_INT(e.x) + e.width) / 2) {
 							e.dx = FLOAT_TO_FIXED(0.5);
-						}
-						else
-						{
+						} else {
 							e.dx = -FLOAT_TO_FIXED(0.5);
 						}
-					}
-					else
-					{
+					} else {
 						if ((FIXED_TO_INT(p.x) + p.width) / 2 <
-							(FIXED_TO_INT(e.x) + e.width) / 2)
-						{
+							(FIXED_TO_INT(e.x) + e.width) / 2) {
 							e.dx = MOVE_SPEED;
-						}
-						else
-						{
+						} else {
 							e.dx = -MOVE_SPEED;
 						}
 						e.state = HURT;
@@ -245,8 +214,7 @@ int main()
 				}
 			}
 			// Cooldown
-			else if (p.stateTimer <= 5)
-			{
+			else if (p.stateTimer <= 5) {
 				// player_color = RGB15(10, 10, 10);
 			}
 			break;
@@ -254,16 +222,14 @@ int main()
 			break;
 		case BLOCK:
 			change_animation(&p, &ANIM_BLOCK);
-			if ((REG_KEYINPUT & KEY_R) && (REG_KEYINPUT & KEY_L))
-			{
+			if ((REG_KEYINPUT & KEY_R) && (REG_KEYINPUT & KEY_L)) {
 				p.state = IDLE;
 			}
 			break;
 		}
 
 		// Enemy state
-		switch (e.state)
-		{
+		switch (e.state) {
 		case IDLE:
 			break;
 		case RUN:
@@ -277,8 +243,7 @@ int main()
 			break;
 		case HURT:
 			e.stateTimer--;
-			if (e.stateTimer <= 0 && e.isGrounded)
-			{
+			if (e.stateTimer <= 0 && e.isGrounded) {
 				e.state = IDLE;
 				// enemy_color = RGB15(0, 0, 31);
 			}
@@ -289,24 +254,20 @@ int main()
 		p.x += p.dx;
 		p.y += p.dy;
 
-		if (p.y > FLOOR_Y)
-		{
+		if (p.y > FLOOR_Y) {
 			p.y = FLOOR_Y;
 			p.dy = 0;
 			p.isGrounded = 1;
-			if (p.state == JUMP)
-			{
+			if (p.state == JUMP) {
 				p.state = IDLE;
 			}
 		}
 
 		// Player not out of bound
-		if (p.x < 0)
-		{
+		if (p.x < 0) {
 			p.x = 0;
 		}
-		if (p.x > INT_TO_FIXED(SCREEN_WIDTH) - INT_TO_FIXED(p.width))
-		{
+		if (p.x > INT_TO_FIXED(SCREEN_WIDTH) - INT_TO_FIXED(p.width)) {
 			p.x = INT_TO_FIXED(SCREEN_WIDTH) - INT_TO_FIXED(p.width);
 		}
 
@@ -324,20 +285,17 @@ int main()
 		e.x += e.dx;
 		e.y += e.dy;
 
-		if (e.y > FLOOR_Y)
-		{
+		if (e.y > FLOOR_Y) {
 			e.y = FLOOR_Y;
 			e.dy = 0;
 			e.isGrounded = 1;
 		}
 
 		// Enemy not out of bound
-		if (e.x < 0)
-		{
+		if (e.x < 0) {
 			e.x = 0;
 		}
-		if (e.x > INT_TO_FIXED(SCREEN_WIDTH) - INT_TO_FIXED(e.width))
-		{
+		if (e.x > INT_TO_FIXED(SCREEN_WIDTH) - INT_TO_FIXED(e.width)) {
 			e.x = INT_TO_FIXED(SCREEN_WIDTH) - INT_TO_FIXED(e.width);
 		}
 	}
