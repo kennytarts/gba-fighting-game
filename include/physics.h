@@ -21,6 +21,8 @@ typedef struct {
 	u8 facingRight;
 	int health;
 
+	const Animation *animTable;
+
 	const Animation *currentAnim;
 	int animTimer;
 	int animFrame;

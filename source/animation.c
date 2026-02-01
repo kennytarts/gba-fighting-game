@@ -1,7 +1,8 @@
 #include "../include/animation.h"
 #include "../include/physics.h"
 
-void change_animation(Character *p, const Animation *newAnim) {
+void change_animation(Character *p, AnimState animID) {
+	const Animation *newAnim = &p->animTable[animID];
 	if (p->currentAnim == newAnim) {
 		return;
 	}

@@ -19,11 +19,14 @@ typedef struct {
 	int loop;
 } Animation;
 
-static const Animation ANIM_IDLE = {0, 8, 8, 1};
-static const Animation ANIM_RUN = {8, 8, 8, 1};
-static const Animation ANIM_JUMP = {16, 2, 8, 0};
-static const Animation ANIM_ATTACK = {22, 2, 8, 0};
-static const Animation ANIM_FALL = {24, 2, 8, 0};
-static const Animation ANIM_DEATH = {40, 6, 8, 0};
-static const Animation ANIM_BLOCK = {48, 4, 8, 0};
+typedef enum {
+	ANIM_IDLE,
+	ANIM_RUN,
+	ANIM_JUMP,
+	ANIM_ATTACK,
+	ANIM_BLOCK,
+	ANIM_HURT,
+	ANIM_DEATH,
+	ANIM_COUNT,
+} AnimState;
 #endif // !SPRITES_H

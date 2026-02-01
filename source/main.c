@@ -3,20 +3,30 @@
 #include "../include/interrupts.h"
 #include "../include/physics.h"
 #include "../include/sprites.h"
-#include "fighter.h"
+#include "knight.h"
+#include "samurai.h"
 #include "stage.h"
 #include <stdlib.h>
 
 OBJ_ATTR shadowOAM[128];
 
 void init_sprite_memory() {
-	REG_DMA[3].src = fighterPal;
+	REG_DMA[3].src = samuraiPal;
 	REG_DMA[3].dst = MEM_PALETTE_OBJ;
-	REG_DMA[3].cnt = (fighterPalLen / 2) | DMA3_COPY16;
+	REG_DMA[3].cnt = (samuraiPalLen / 2) | DMA3_COPY16;
+	REG_DMA[3].cnt = (16) | DMA3_COPY16;
 
-	REG_DMA[3].src = fighterTiles;
+	REG_DMA[3].src = samuraiTiles;
 	REG_DMA[3].dst = MEM_TILE_OBJ;
-	REG_DMA[3].cnt = (fighterTilesLen / 4) | DMA3_COPY32;
+	REG_DMA[3].cnt = (samuraiTilesLen / 4) | DMA3_COPY32;
+
+	REG_DMA[3].src = knightPal;
+	REG_DMA[3].dst = MEM_PALETTE_OBJ + 16;
+	REG_DMA[3].cnt = (16) | DMA3_COPY16;
+
+	REG_DMA[3].src = knightTiles;
+	REG_DMA[3].dst = MEM_TILE_OBJ + (samuraiTilesLen / 4);
+	REG_DMA[3].cnt = (knightTilesLen / 4) | DMA3_COPY32;
 
 	shadowOAM[0].attr0 = 50 | (0 << 13) | (0 << 14);
 	shadowOAM[0].attr1 = 100 | (2 << 14);
@@ -39,10 +49,12 @@ void init_background() {
 	REG_DMA[3].cnt = (stageMapLen / 2) | DMA3_COPY16;
 }
 
-void update_visuals(Character *p, int oam_index) {
-	int tileIndex = 0 + (p->currentAnim->startFrame + p->animFrame) * 16;
+void update_visuals(Character *p, int oam_index, int baseTileIndex,
+					int paletteBank) {
+	int tileIndex =
+		baseTileIndex + (p->currentAnim->startFrame + p->animFrame) * 16;
 
-	shadowOAM[oam_index].attr2 = tileIndex;
+	shadowOAM[oam_index].attr2 = tileIndex | (paletteBank << 12);
 
 	u16 attr1 = (FIXED_TO_INT(p->x) & 0x1FF) | (2 << 14);
 	if (!p->facingRight) {
@@ -52,7 +64,7 @@ void update_visuals(Character *p, int oam_index) {
 		(FIXED_TO_INT(p->y) & 0xFF) | (0 << 13) | (0 << 14);
 	shadowOAM[oam_index].attr1 = attr1;
 
-	MEM_OAM[0] = shadowOAM[oam_index];
+	MEM_OAM[oam_index] = shadowOAM[oam_index];
 }
 
 const int GRAVITY = FLOAT_TO_FIXED(0.2);
@@ -99,7 +111,8 @@ int main() {
 	p.isGrounded = 0;
 	p.state = IDLE;
 	p.facingRight = 1;
-	p.currentAnim = &ANIM_IDLE;
+	p.animTable = SAMURAI_ANIMS;
+	p.currentAnim = &p.animTable[ANIM_IDLE];
 	p.animTimer = 0;
 	p.animFrame = 0;
 
@@ -111,22 +124,29 @@ int main() {
 	e.width = 10;
 	e.height = 10;
 	e.isGrounded = 0;
-	e.state = BLOCK;
+	e.state = IDLE;
+	e.facingRight = 0;
+	e.animTable = KNIGHT_ANIMS;
+	e.currentAnim = &e.animTable[ANIM_IDLE];
+	e.animTimer = 0;
+	e.animFrame = 0;
 
 	while (1) {
 		// BIOs Call 5: VBLlankIntrWait (Puts CPU into low-power sleep until
-		// VBlank interrupt fires.
+		// VBlank interrupt fires.)
 		__asm("swi 0x05");
 
 		update_animation(&p);
-		update_visuals(&p, 0);
+		update_animation(&e);
+		update_visuals(&p, 0, 0, 0);
+		update_visuals(&e, 1, (samuraiTilesLen / 32), 1);
 
 		// Player state
 		p.dx = 0;
 		e.dx = 0;
 		switch (p.state) {
 		case IDLE:
-			change_animation(&p, &ANIM_IDLE);
+			change_animation(&p, ANIM_IDLE);
 			if (!(REG_KEYINPUT & KEY_RIGHT) | !(REG_KEYINPUT & KEY_LEFT)) {
 				p.state = RUN;
 			}
@@ -138,14 +158,15 @@ int main() {
 			}
 			if (!(REG_KEYINPUT & KEY_B)) {
 				p.state = ATTACK;
-				p.stateTimer = 12;
+				p.stateTimer =
+					(p.animTable[ANIM_ATTACK].length) * ((p.animTable[ANIM_ATTACK].speed) + 1);
 			}
 			if (!(REG_KEYINPUT & KEY_R) | !(REG_KEYINPUT & KEY_L)) {
 				p.state = BLOCK;
 			}
 			break;
 		case RUN:
-			change_animation(&p, &ANIM_RUN);
+			change_animation(&p, ANIM_RUN);
 			if (!(REG_KEYINPUT & KEY_RIGHT)) {
 				p.facingRight = 1;
 				p.dx = MOVE_SPEED;
@@ -167,7 +188,7 @@ int main() {
 			}
 			break;
 		case JUMP:
-			change_animation(&p, &ANIM_JUMP);
+			change_animation(&p, ANIM_JUMP);
 			if (!(REG_KEYINPUT & KEY_RIGHT)) {
 				p.facingRight = 1;
 				p.dx = MOVE_SPEED;
@@ -179,7 +200,7 @@ int main() {
 			}
 			break;
 		case ATTACK:
-			change_animation(&p, &ANIM_ATTACK);
+			change_animation(&p, ANIM_ATTACK);
 			p.stateTimer--;
 			if (p.stateTimer <= 0) {
 				p.state = IDLE;
@@ -221,7 +242,7 @@ int main() {
 		case HURT:
 			break;
 		case BLOCK:
-			change_animation(&p, &ANIM_BLOCK);
+			change_animation(&p, ANIM_BLOCK);
 			if ((REG_KEYINPUT & KEY_R) && (REG_KEYINPUT & KEY_L)) {
 				p.state = IDLE;
 			}
